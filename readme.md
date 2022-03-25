@@ -1,16 +1,10 @@
-# Building an easy HTTP multi-threaded web server in Java
-
-###### Radim Urban, radimurban.com, radimurban01@gmail.com
-This .md was written in time pressure and will be therefore cleaned up later.
-
-**Disclaimer:** At the beginning of every file, there is a comment on if the code is mine.
-
-## How to run
-Please to run this server, run the main method in application package in the GUI class. You will get a dialog window with button to start the server.
-To configure go to `src/main/resources` and configure the port or webroot in configuration.json.
+# Building a simple HTTP multi-threaded web server in Java
+**Disclaimer:** At the beginning of every file in the [GitHub Repo of this project](https://github.com/radimurban/web-server-in-java), there is a comment on if the code is mine. At some points I was strongly inspired by others who did this already.
+## How to run and configure
+Please to run this server, run the main method in application package in the GUI class. You will get a window with button to start the server. To configure go to **src/main/resources** and configure the **port** or **webroot** in **configuration.json**.
 
 ## Task and Goal
-The goal is to learn how to implement an easy **multi-threaded**(= being able to handle multiple connections/requests at once) web server in Java.
+The goal is to learn how to implement and actually implement a very simple version of **multi-threaded** web server in Java.
 
 ## Resources and readings
 I have never done this before, so I am listing the following links which I used to learn about everything I needed to know to make this work.
@@ -22,57 +16,55 @@ I have never done this before, so I am listing the following links which I used 
 - [Create a simple HTTP Web Server in Java](https://ssaurel.medium.com/create-a-simple-http-web-server-in-java-3fc12b29d5fd)
 - [Build your own HTTP server in Java in less than one hour](https://dev.to/mateuszjarzyna/build-your-own-http-server-in-java-in-less-than-one-hour-only-get-method-2k02)
 - [Building a simple web server in Java [YT]](https://www.youtube.com/watch?v=FqufxoA4m70)
-- [On Parsing JSON files in Java](https://www.geeksforgeeks.org/how-to-setup-jackson-in-java-application/) - used
-- [Make a Simple HTTP Server in Java [YT]](https://www.youtube.com/watch?v=FNUdLeGfShU) - used
+- [On Parsing JSON files in Java](https://www.geeksforgeeks.org/how-to-setup-jackson-in-java-application/) 
+- [Make a Simple HTTP Server in Java [YT]](https://www.youtube.com/watch?v=FNUdLeGfShU)
 
 ## How does an HTTP server work?
-A server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports. Usual requests are files or something in the file system. The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
+The server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports (for example 80 for not encrypted and 443 for encrypted traffic). Usual requests are files or something in the file system (web root). The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
 
 ## What needs to be implemented
-1. Server must be able to listen to a *configurable* port and therefore to read the configuration files (JSON) and how to write them
-2. Establishing connection between the browser and the server
-3. Read requests messages and understanding them
-4. Handling the requests (accessing file system)
-5. Composing the response
-
-Let's get started
+Server must be able to:
+1. listen to a *configurable* port and therefore to read the configuration files (JSON) and how to write them
+2. establish and handle multiple connection(s) (multi-threaded) between the browser and the server
+3. parse and understand requests messages coming from browser
+4. compose the response based on the request
 
 ## Implementing and handling the configurations
 For keeping the configurations in one place, we will use JSON.
 
 We need to configure: 
-1. Port (int): so far one, we can configure more later, our server will listen to this port
-2. Webroot (string): pathway of where the files are saved
+1. `port` (int): so far one, we can configure more later, our server will listen to this port
+2. `webroot` (String): pathway of where the web files are saved
 
 ```JSON
 {
 	"port": 8080,
-	"webroot": "web"
+	"webroot": ""
 }
 ```
 
-We will now write the configuration file handler as well as getter/setter. Both will be in the package of the http server and in the same configuration package within the http server package.
+We will now write two classes. One class for handling the configurations and one for its representation (a simple *setter* and *getter* of the `port` and `webroot`) Both will be in the package of the httpServer.
 
 The actual configuration class is trivial and will look like this: 
  ```java
-protected class Configuration {
+public class Configuration {
 	
 	private int port;
 	private String webroot;
 	
-	private int getPort(){
+	public int getPort(){
 		return this.port;
 	}
 	
-	private void setPort(int port){
+	public void setPort(int port){
 		this.port = port;
 	}
 	
-	private String getWebroot(){
+	public String getWebroot(){
 		return this.webroot;
 	}
 	
-	private void setWebroot(String webroot){
+	public void setWebroot(String webroot){
 		this.webroot = webroot;
 	}
 }
@@ -81,34 +73,32 @@ protected class Configuration {
  This where we retrieve the configuration data from. It will basically be an object containing the configuration data.
  
  Now we need to write the configuration handler. Our handler needs to be able to (those will be separate functions):
- 1. load the configuration file
- 2. get the current configuration (and return it)
+ - load the configuration file
+ - get the current configuration (and return it obviously)
  
 ```java
-protected class ConfigurationHandler{
+public class ConfigurationHandler{
 	
 	private Configuration config; //the config that will be loaded
 	//default constructor
 	
-	
 	//this method might throw exceptions (wrong path, permission problem and so on)
-	protected void loadConfig(String path){
-	
+	public void loadConfig(String path){
 	}
-	
+
 	//only if config is loaded, otherwise throws an exception
-	protected void getCurrentConfig() {
-		
+	public void getCurrentConfig() {
 	}
+	
 }
 ```
 
 Now we need to figure out a way how to parse the JSON file and create the Configuration object . This is a pretty complicated step (at least if you're doing this for the first time).
 
 ### Parsing JSON in Java
-I will create the entire project as a [Maven](https://maven.apache.org/) project and for the actual parsing the Jackson library which can be used for parsing and generating JSON files. It has an Object Mapper class that can process JSON files and create Java objects out of them, which is exactly what we need.
+The entire project will use [Maven](https://maven.apache.org/) for easily keeping dependencies in order and for the actual parsing of the JSON file the *Jackson library* which can be used for parsing and generating JSON files. It has an Object Mapper class that can process JSON files and create Java objects out of them, which is exactly what we need.
 
-In order to use the Jackson library, we need to define the dependencies (Maven files need to be in our class-path). 
+In order to use the Jackson library, we need to define the dependencies.
 #### Defining the dependencies
 The pom.xml file look like this:
 ```xml
@@ -125,7 +115,7 @@ The pom.xml file look like this:
 	<version>1.0.0-SNAPSHOT</version>
 	
 	<dependencies>
-		<?-- We need to add Jackson core and databind --?>
+		<?We need to add Jackson core and databind?>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
@@ -144,7 +134,7 @@ In this class, that we will make use of the `ObjectMapper()`  which we will impo
 
 There are two ways to get/use the ObjectMapper. You can either just use the default one or configure your own. If you dont want to configure it at all, you can just use `public static ObjectMapper objectMapper = new ObjectMapper();`. Otherwise create the function that returns the ObjectMapper and configure it within the function before you return it.
 
-Another part of the Jackson library is the JsonNode. This class represents the structure of the original JSON file. We will first want to transform/map the JSON into this class (object). We define the function getJsonNode() to get this JsonNode representation. It will take in one argument - the string representation of the JSON file.
+Another part of the Jackson library is the JsonNode. This class represents the structure of the original JSON file. We will first want to transform/map the JSON into this class (object). We define the function `getJsonNode()` to get this JsonNode representation. It will take in one argument - the string representation of the JSON file.
 ```java
 //part of the package
 
@@ -167,7 +157,7 @@ Using this if we for example take our JSON configuration file to test the output
 	"webroot": "path"
 }
 ```
-We have string representation *"{\"port\":8080, \"webroot\":\"path\"}"* and the ouput of the function `getJsonNode()` is an JsonNode object on which we can for example call:
+We have string representation "{"port":8080, "webroot":"web"}" and the output of the function `getJsonNode()` is an JsonNode object on which we can for example call:
 ```java
 //import previous class JsonHandler and JsonNode 
 String jsonInString = "{\"port\":8080, \"webroot\":\"path\"}"
@@ -267,17 +257,14 @@ public class HttpServer {
 	}
 }
 ```
-Assuming the previous JSON Configuration this `config` would return 8080 on `congif.getPort()`  and `"path"` on `config.getWebrot()`.
-## 2. Establishing a connection and using server sockets
-To establish the connection, we need to have a socket that is going to listen to the port. Java has a [net library](https://docs.oracle.com/javase/7/docs/api/index.html) which provides classes for networking applications. One of them is the *Server Socket*. A server socket waits for requests to come in over the network. It performs some operation based on that request, and then possibly returns a result to the requester. To create a server socket *bounded to a specific port*, we construct the object and pass the port number as a parameter. We can easily retrieve this from our Configuration object.
+Assuming the previous JSON Configuration this `config` would return 8080 on `congif.getPort()`  and "web" on `config.getWebrot()`. That means we now have a Configuration data in the HttpServer class. Let's move onto establishing connections.
+## Establishing a connection and using (server) sockets
+To establish the connection, we need to have a socket that is going to listen to a specific port. Java has a [net library](https://docs.oracle.com/javase/7/docs/api/index.html) which provides classes for networking applications. One of them is the *Server Socket*. A server socket waits for requests to come in over the network. It performs some operation based on that request, and then possibly returns a result to the requester. To create a server socket *bounded to a specific port*, we construct the object and pass the port number as a parameter. We can easily retrieve this from our Configuration object.
 ```java
-/*
- * previous HttpServer class code..
- */
 int port = config.getPort();
 ServerSocket myServerSocket = ServerSocket(port);
 ```
-Now we can say we want the socket to wait for the connection to be established. The function `accept()` listens for a connection to be made to this socket and accepts it. The method blocks until a connection is made. Once a connection is made, Socket is returned. A socket is an endpoint for communication between two machines.
+Now we can say we want the socket to wait for the connection to be established. The function `accept()` listens for a connection to be made to this socket and accepts it. The method blocks until a connection is made. Once a connection is made, a Socket is returned. A socket is an endpoint for communication between two machines.
 Socket has two methods we will want to use:
 - `getInputStream()`: returns an *input stream* for reading bytes from this socket. Based on the *input stream* we will decide what to return as a response to the browser.
 - `getOutputStream()`: returns an *output stream* for writing bytes to this socket. Using the *output stream* (and its method `write()`) we will be able to send the response to the browser
@@ -294,12 +281,7 @@ InputStream inputStream = socket.getInputStream();
 OutputStream outputStream = socket.getOuputStream();
 
 /*
- *
- * 
  * Here, we will evaluate the response and formulate an appropriate repsone
- * 
- * 
- * 
  */
 
 inputStream.close();
@@ -307,15 +289,16 @@ outputStream.close();
 socket.close();
 myServerSocket.close();
 ```
-
-## 3. Multi-threaded accepting of connections and handling multiple requests
-
+Now that we have basically all we need for single-threaded web server - let's make it work in parallel such that multiple connections and requests can handled independently.
+## Multi-threaded accepting of connections and handling multiple requests
 Let's now create a different package `tools` where we will handle connections in multi-threaded scenario.
-I will create two classes (both extending thread (and therefore implementing Runnable)). 
--`Acceptor`: In this class I will basically create threads and wait dor the connection to be made by a request coming from a browser. As soon as I establish connection and receive the `socket`, I am gonna call the `Executor` Class
+I will create two classes (both extending thread (and therefore implementing Runnable). 
+-`Acceptor`: In this class I will basically create threads and wait for the connection to be made by a request coming from a browser. As soon as I establish connection and receive the `socket`, I am gonna start a new thread of an `Executor` Class.
 -`Executor`: In this class I will handle the requests (understand them) and build the appropriate response. Once a response is build we can fire it back to the browser using `OutputStream` as explained above.
 
+## Building multiple connections using `Acceptor`
 `Acceptor` will look like this:
+The constructor will accept the port and the web-root. As already explained we overrun the method `run()`, which is basically a main method for this thread started by `start()`. This method will wait for a connection and once it is made it will start a new thread `Executor`.  There might be some IOE, so we need to wrap it into try/catch code.
 ```java
 package tools;
 
@@ -363,11 +346,9 @@ public class Acceptor extends Thread{
 }
 
 ```
-
 Let's now build the executor.
-
-## Handling the requests and building the `Executor`
-Based on what we get through the `inputStream` we can understand what the browser requests and form an appropriate response. As mentioned earlier, we will assume that the request is an path to a certain file.
+### Handling the requests and building the `Executor`
+Based on what we get through the `inputStream` we are able understand what the browser requests and form an appropriate response. As mentioned earlier, we will assume that the request is an path to a certain file.
 
 An [HTTP Request](https://www.ibm.com/docs/en/cics-ts/5.2?topic=protocol-http-requests) consists of request line, headers and message body. But I will only have enough time to implement basic requuest line requests (not taking headers and so on into consideration):
 1.  **A request line**: this is the first line, it consist of three attributes
@@ -375,8 +356,8 @@ An [HTTP Request](https://www.ibm.com/docs/en/cics-ts/5.2?topic=protocol-http-re
 	- path of the URL 
 	- an HTTP version number
 
-We now override the run method beacause we extend the thread class.
-We can parse the `InputStream` and read all three properties of a request line:
+We now override the `run()` method because we extend the thread class. We can parse the `InputStream` and read all three properties of a request line:
+
 ```java
       
 
@@ -410,54 +391,44 @@ web = loadFile(url);
 String httpVersion = requestLineComponents[2];
 ```
 
-So the request could for example look like this:
+A typical browser request looks similar to the following example:
 
 ```txt
 
 GET / HTTP/1.1
-
 Host: localhost:8080
-
 Connection: keep-alive
-
 Cache-Control: max-age=0
-
 sec-ch-ua: " Not A;Brand";v="99", "Chromium";v="99", "Google Chrome";v="99"
-
 sec-ch-ua-mobile: ?0
-
 sec-ch-ua-platform: "macOS"
-
 Upgrade-Insecure-Requests: 1
-
 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36
-
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9
-
 Sec-Fetch-Site: none
-
 Sec-Fetch-Mode: navigate
-
 Sec-Fetch-User: ?1
-
 Sec-Fetch-Dest: document
-
 Accept-Encoding: gzip, deflate, br
-
 Accept-Language: cs
 ```
 
-Out of that we will only take the first line:
+Out of that we will only take the first line. That is the **request line**:
+
 ```txt
 GET / HTTP/1.1
 ```
 
-Now we have that (mind `method`, `url`, `httpVersion`).
+Now we have that (mind `method`="GET", `url`="/", `httpVersion`="HTTP/1.1").
 
-We will do the absolute minimum and consider GET and HEADER methods. Let's therefore check if the request uses one of these and if not we will return a 501 Not Implemented error.
+### Responses
+Response in general consists of `statusLine`, headers, and the message body(=`web`). These parameters must separated by a `SEPARATOR` which is by convention `\r\n`. That will be true for all reponses in general.
+
+We will do the absolute minimum and consider GET and HEADER methods. Let's therefore check if the request uses one of these and if not we will return a 501 Not Implemented error. As soon as I identify an error I will compose an error response.
+
+### 501 Not Implemented
 
 ```java
-      
 if (!(method.equals("GET") || method.equals("HEADER"))) {
 	statusLine = "HTTP/1.1 501 Not Implemented";
 	web = loadFile("web/errors/501.html");
@@ -474,9 +445,10 @@ if (!(method.equals("GET") || method.equals("HEADER"))) {
 }
 ```
 
+### 404 File Not Found
 Let's now check if we have the file the request is asking for. For that let's create a new method `loadFile` which will parse the file into STring or return "404" if such file is not in our webroot.
-```java
 
+```java
 public String loadFile(String path){
 
 	FileReader fileReader;
@@ -508,7 +480,7 @@ if (!executed) {
 	if (!(loadFile(url+"/index.html").equals("404"))) {
 		url += "/index.html";
 	}
-	System.**_out_**.println(url);
+	System.out.println(url);
 	web = loadFile(url);
 	//if the file could not be loaded, raise 404 File Not Found
 	if (web.equals("404")) {
@@ -527,12 +499,15 @@ if (!executed) {
 	}
 //but if response was not sent
 } 
+```
+### 505 HTTP Version Not Supported
+```java
 if (!executed) {
 	//exctract the HTTP version
 	httpVersion = requestLineComponents[2];
 	//if not the correct version
 	if (!httpVersion.equals("HTTP/1.1")) {
-		System.**_out_**.println("and HTTP Failed");
+		System.out.println("and HTTP Failed");
 		//set status line
 		statusLine = "HTTP/1.1 505 HTTP Version Not Supported";
 		//set web
@@ -547,15 +522,30 @@ if (!executed) {
 		//send response
 		outputStream.write(response.getBytes());
 		//response was sent
-		executed = true;
+		executed = true
+	}
+}
+```
+### Response with no errors
+If nothing failed, we obviously send the correct one.
+```java
+if(!executed) {
+	System.out.println("Nothing failed \n");
+	web = loadFile(url);
+	statusLine = "HTTP/1.1 200 OK";
+	response = statusLine
+	+ SEPARATOR
+	+ "Content-Length:" + web.getBytes().length
+	+ SEPARATOR + SEPARATOR 
+	+ web 
+	+ SEPARATOR + SEPARATOR;
+	outputStream.write(response.getBytes());
 }
 ```
 
-If nothing failed, we obviously send the correct one.
-
-## GUI
-Last thing (least important) I will be able to do is the graphical interface to start the server.
-I will just create a class GUI implementing the ActionListener and create a main method.
+## Graphical UI
+Last thing (and probably least) I will be able to do is the graphical interface to start the server.
+I will just create a class GUI implementing the `ActionListener` and create a main method. 
 
 Since this a trivial code, I will just paste the code and the result.
 
@@ -622,5 +612,16 @@ public class GUI implements ActionListener{
 }
 ```
 
-This is all I can manage to do till the deadline. The actual server is working and can be tested on localhost as described at the very beginning.
+This is all I can manage to do till my deadline. The actual server is working and can be tested on localhost as described at the very beginning.
+
+### Window before starting the server
+<img width="1481" alt="image" src="https://user-images.githubusercontent.com/78273894/160201249-f0a4b75a-6ae4-4c36-b5bc-6a01dae1e131.png">
+### Window after starting the server
+<img width="1481" alt="image" src="https://user-images.githubusercontent.com/78273894/160201291-a989d88e-db4e-4280-8aa0-bd4e6853687d.png">
+
+## Potential To-Do's
+- images
+- working with headers
+- automatic /.index recognition
+-
 
