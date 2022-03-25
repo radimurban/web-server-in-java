@@ -25,16 +25,18 @@ I have never done this before, so I am listing the following links which I used 
 - [Make a Simple HTTP Server in Java [YT]](https://www.youtube.com/watch?v=FNUdLeGfShU) - used
 
 ## How does an HTTP server work?
-The server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports (for example 80 for not encrypted and 443 for encrypted traffic). Usual requests are files or something in the file system (web root). The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
+A server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports. Usual requests are files or something in the file system. The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
 
 ## What needs to be implemented
-1. Server must be able to listen to a (*configurable*) port and therefore to read the configuration files (JSON) and how to write them
+1. Server must be able to listen to a *configurable* port and therefore to read the configuration files (JSON) and how to write them
 2. Establishing connection between the browser and the server
 3. Read requests messages and understanding them
 4. Handling the requests (accessing file system)
 5. Composing the response
 
-## 1.  Implementing and handling the configurations
+Let's get started
+
+## Implementing and handling the configurations
 For keeping the configurations in one place, we will use JSON.
 
 We need to configure: 
@@ -44,7 +46,7 @@ We need to configure:
 ```JSON
 {
 	"port": 8080,
-	"webroot": ""
+	"webroot": "web"
 }
 ```
 
@@ -103,7 +105,7 @@ protected class ConfigurationHandler{
 Now we need to figure out a way how to parse the JSON file and create the Configuration object . This is a pretty complicated step (at least if you're doing this for the first time).
 
 ### Parsing JSON in Java
-To keep the dependencies in order, we'll use [Maven](https://maven.apache.org/) and for the actual parsing the Jackson library which can be used for parsing and generating JSON files. It has an Object Mapper class that can process JSON files and create Java objects out of them, which is exactly what we need.
+I will create the entire project as a [Maven](https://maven.apache.org/) project and for the actual parsing the Jackson library which can be used for parsing and generating JSON files. It has an Object Mapper class that can process JSON files and create Java objects out of them, which is exactly what we need.
 
 In order to use the Jackson library, we need to define the dependencies (Maven files need to be in our class-path). 
 #### Defining the dependencies
@@ -122,7 +124,7 @@ The pom.xml file look like this:
 	<version>1.0.0-SNAPSHOT</version>
 	
 	<dependencies>
-		<?We need to add Jackson core and databind?>
+		<?-- We need to add Jackson core and databind --?>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
