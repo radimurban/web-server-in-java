@@ -20,7 +20,7 @@ I have never done this before, so I am listing the following links which I used 
 - [Make a Simple HTTP Server in Java [YT]](https://www.youtube.com/watch?v=FNUdLeGfShU)
 
 ## How does an HTTP server work?
-The server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports (for example 80 for not encrypted and 443 for encrypted traffic). Usual requests are files or something in the file system (web root). The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
+A server is a computer. It needs to be connected to the network to be able to receive the requests. It will be listening through ports (for example 80 for not encrypted and 443 for encrypted traffic). Usual requests are files or something in the file system (web root). The server will look for the file(s) that match the request and sends a response back to the browser through the established connection. After the browser receives the response, the server closes the connection. There is therefore a new connection established for every single request coming from the browser. We can now sum up what we need to do.
 
 ## What needs to be implemented
 Server must be able to:
