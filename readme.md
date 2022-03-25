@@ -1,7 +1,7 @@
 # Building an easy HTTP multi-threaded web server in Java
 
 ###### Radim Urban, radimurban.com, radimurban01@gmail.com
-This .md was written in extreme time pressure and will be therefore cleaned up later.
+This .md was written in time pressure and will be therefore cleaned up later.
 **Disclaimer:** At the beginning of every file, there is a comment on if the code is mine.
 
 ## How to run
