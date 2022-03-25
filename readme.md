@@ -296,7 +296,7 @@ I will create two classes (both extending thread (and therefore implementing Run
 -`Acceptor`: In this class I will basically create threads and wait for the connection to be made by a request coming from a browser. As soon as I establish connection and receive the `socket`, I am gonna start a new thread of an `Executor` Class.
 -`Executor`: In this class I will handle the requests (understand them) and build the appropriate response. Once a response is build we can fire it back to the browser using `OutputStream` as explained above.
 
-## Building multiple connections using `Acceptor`
+### Building multiple connections using `Acceptor`
 `Acceptor` will look like this:
 The constructor will accept the port and the web-root. As already explained we overrun the method `run()`, which is basically a main method for this thread started by `start()`. This method will wait for a connection and once it is made it will start a new thread `Executor`.  There might be some IOE, so we need to wrap it into try/catch code.
 ```java
@@ -615,8 +615,11 @@ public class GUI implements ActionListener{
 This is all I can manage to do till my deadline. The actual server is working and can be tested on localhost as described at the very beginning.
 
 ### Window before starting the server
+
 <img width="1481" alt="image" src="https://user-images.githubusercontent.com/78273894/160201249-f0a4b75a-6ae4-4c36-b5bc-6a01dae1e131.png">
+
 ### Window after starting the server
+
 <img width="1481" alt="image" src="https://user-images.githubusercontent.com/78273894/160201291-a989d88e-db4e-4280-8aa0-bd4e6853687d.png">
 
 ## Potential To-Do's
