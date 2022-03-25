@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="Building an HTTP multi-threaded web server in Java | Radim Urban" content="This is a little fun project of mine. The goal is to learn how to implement an easy multi-threaded web server in Java." />
+  <link rel="stylesheet" href="../../styles/styles.css" media="screen">
+
+  <title>Building an easy HTTP multi-threaded web server in Java | Radim Urban</title>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+  <script type="text/javascript" src="https://blockchain.info/Resources/js/pay-now-button.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript" src="../../js-package/scripts.js"></script>
+
+  <header>
+    <a href="../../" id="headliner"><b>RADIM URBAN</b></a>
+    <div id="div-for-menu-button">
+      <input id="header-menu-btn" type="button" name="header-menu" onclick="headermenu()" value="≡">
+    </div>
+  </header>
+  <nav id="desktop-menu">
+    <a href="../../blog">blog</a>
+    <a href="../../projects/">projects</a>
+    <a href="mailto:radimurban01@gmail.com">email</a>
+  </nav>
+
+
+
+
+<div class="textblok">
+<h1>Building a simple HTTP multi-threaded web server in Java</h1>
+<span style="color:gray;">22. 3. 2022</span>
+<h2>Task and Goal</h2> 
+<p>
+    The goal is to learn how to implement an easy <b>multi-threaded</b> (= being 
+    able to handle multiple connections/requests at once) web server in Java.
+    <br>
+    Extension: <i>Add proper HTTP/1.1 keep-alive behavior to your 
+        implementation based on the http-client's capabilities 
+        exposed through its request headers.</i>
+
+</p>
+<h2>Resources and readings</h2>
+<p>
+    I have never done this before, so I am listing the following links which 
+    I used to learn about everything I needed to know to make this work.
+</p>
+<ul>
+    <li><a target="_blank" href="https://ssaurel.medium.com/create-a-simple-http-web-server-in-java-3fc12b29d5fd">Create a simple HTTP Web Server in Java</a></li>
+    <li><a target="_blank" href="https://www.youtube.com/watch?v=KlKVxmeKAzE">Web server in pure Java</a></li>
+    <li><a target="_blank" href="https://www2.seas.gwu.edu/~cheng/6431/Projects/Project1WebServer/webserver.html">Web server project</a></li>
+    <li><a target="_blank" href="https://ssaurel.medium.com/create-a-simple-http-web-server-in-java-3fc12b29d5fd">HTTP Server Documentation</a></li>
+    <li><a target="_blank" href="https://www.codeproject.com/Tips/1040097/Create-a-Simple-Web-Server-in-Java-HTTP-Server">Create a Simple Web Server in Java HTTP Server</a></li>
+    <li><a target="_blank" href="https://dev.to/mateuszjarzyna/build-your-own-http-server-in-java-in-less-than-one-hour-only-get-method-2k02">Build your own HTTP server in Java in less than one hour</a></li>
+    <li><a target="_blank" href="https://www.youtube.com/watch?v=FqufxoA4m70">Building a simple web server in Java [YT]</a></li>
+    <li><a target="_blank" href="https://www.geeksforgeeks.org/how-to-setup-jackson-in-java-application/">On Parsing JSON files in Java</a></li>
+    <li><a target="_blank" href="https://www.youtube.com/watch?v=FNUdLeGfShU">Make a Simple HTTP Server in Java [YT]</a></li>
+</ul>
+<h2>How does an HTTP server work?</h2>
+<p>
+    A server is a computer. It needs to be connected to the network to be able to receive 
+    the requests. It will be listening through ports (for example 80 for not encrypted and 
+    443 for encrypted traffic). Usual requests are files or something in the file system (web root).
+     The server will look for the file(s) that match the request and sends a response back to the browser 
+     through the established connection. After the browser receives the response, the server closes the connection. 
+     There is therefore a new connection established for every single request coming from the browser. We can now sum 
+     up what we need to do.
+</p>
+<h2>What needs to be implemented</h2>
+<ol>
+    <li>Server must be able to listen to a <i>(configurable)</i> port and therefore to read the configuration files (JSON) and how to write them</li>
+    <li>Establishing connection between the browser and the server</li>
+    <li>Read requests messages and understanding them</li>
+    <li>Handling the requests (accessing file system)</li>
+    <li>Composing the response</li>
+</ol>
+<h2>1. Implementing and handling the configurations</h2>
+<p>
+    For keeping the configurations in one place, we will use JSON. <br>
+    We need to configure: 
+</p>
+<ol>
+    <li><b>Port (int):</b> so far one, we can configure more later, our server will listen to this port</li>
+    <li><b>Webroot (string):</b> pathway of where the files are saved</li>
+</ol>
+<script src="https://gist.github.com/radimurban/bd66ec94cb290e3fa7526160d7dd88fe.js"></script>
+<p>
+    We will now write the configuration handler class as well as
+     configuration class. Both will be in the package of the http server and in 
+     the same configuration package within the http server package.
+     <br>
+     The actual configuration class is trivial and will look like this: 
+</p>
+<script src="https://gist.github.com/radimurban/983cafc9b3a155a65e0a43be4b007e3c.js"></script>
+<p>This where we retrieve the configuration data from. It will basically be an object containing the configuration data.
+ <br>
+    Now we need to write the configuration handler. Our handler needs to be able to (those will be separate functions):
+
+</p>
+<ol>
+    <li>Load the Configuration</li>
+    <li>Get the Configuration</li>
+</ol>
+<script src="https://gist.github.com/radimurban/d27797ca2d3068df04ca4c119fb832b0.js"></script>
+
+<p>
+    Now we need to figure out a way how to parse 
+    the JSON file and create the Configuration object . 
+    This is a pretty complicated step (at least if you're doing this for the first time).
+</p>
+
+<h3>Parsing JSON in Java</h3>
+<p>
+    To keep the dependencies in order, we'll use <a href="https://maven.apache.org/">Maven</a> and for the actual parsing the <b>Jackson</b> 
+    library which can be used for parsing and generating JSON files. It has an Object Mapper class that can process JSON files and create 
+    Java objects out of them, which is exactly what we need.
+<br>
+In order to use the Jackson library, we need to define the dependencies (Maven files need to be in our classpath). 
+</p>
+<h4>Defining the dependencies</h4>
+<p>
+    The pom.xml file looks like this:
+</p>
+<script src="https://gist.github.com/radimurban/c1f159dca7b22d998d0965b5a6fa90ba.js"></script>
+<h4>Java class handling the JSON files</h4>
+<p>
+    In this class, that we will make use of the <code>ObjectMapper()</code> which we will import from the jackson.databind. 
+
+There are two ways to get/use the ObjectMapper. You can either just use the default one or configure your own. If you dont want to configure it at all, you can just use <code>public static ObjectMapper objectMapper = new ObjectMapper();</code>. Otherwise create the function that returns the ObjectMapper and configure it within the function before you return it.
+
+Another part of the Jackson library is the JsonNode. This class represents the structure of the original JSON file. We will first want to transform/map the JSON into this class (object). We define the function <code>getJsonNode()</code> to get this JsonNode representation. It will take in one argument - the string representation of the JSON file.
+</p>
+<script src="https://gist.github.com/radimurban/8470c1581b8d3a3514f0a6e250f916bd.js"></script>
+<p>
+    Using this if we for example take our JSON configuration file to test the output of this <code>getJsonNode()</code> function. That is, for the following JSON:
+</p>
+<script src="https://gist.github.com/radimurban/bd66ec94cb290e3fa7526160d7dd88fe.js"></script>
+<p>
+    We have string representation <i>"{\"port\":8080, \"webroot\":\"path\"}"</i> and the 
+    ouput of the function <code>getJsonNode()</code> is an JsonNode object on which we can for example call:
+</p>
+<script src="https://gist.github.com/radimurban/449f13b0fc344e336ee16650cb400cb3.js"></script>
+<p>
+    At this point we need to move the JsonNode object into the Configuration object/class. For that we need to define another function in the JsonHandler class. <br>
+We can do this using the ObjectMapper and its <code>treeToValue(JsonNode, Class &lt;T&gt;)</code>. This function returns the class we want the JsonNode to transform into (we pass this as a second argument).
+At the same time we can define a function that is the inverse to JsonToClass. This function will accept an object as an argument ans will return the JsonNode object.
+Another thing that can be useful is to get a way to get the Configuration as a string, which is basically a JSON.
+</p>
+<script src="https://gist.github.com/radimurban/fb14a122b5af4712328991e9190ed60e.js"></script>
+<p>
+    Now we have everything we need to process and to work with the JSON files.
+</p>
+<h3>Configuration Handler </h3>
+
+<p>
+    We can now proceed to implement the methods of the ConfigurationHandler class.
+</p>
+<ul>
+    <li> <code>loadconfig()</code>: we need to find the file at given path and read it completely. Good way to save its content could the <a href="https://docs.oracle.com/javase/7/docs/api/java/lang/StringBuffer.html">StringBuffer</a>. Let's just simply iterate over 
+        the content of the file and use <a href="https://docs.oracle.com/javase/7/docs/api/java/io/InputStreamReader.html#read()"><code>read()</code></a> to read its content. <code>read()</code> will return <code>-1</code> as soon as we reach the end of the file.
+        After that, we can make use of the function <code>getJsonNode()</code> we defined in the previous part to get the JsonNode representation.</li>
+    <li> <code>getCurrentConfig()</code>: This is just a simple method that will return the current configuration. (Mind the <code>NullPointerException()</code>). A possible improvement here could working out the exceptions in a better way. </li>
+</ul>
+<script src="https://gist.github.com/radimurban/a936587eb36c6d0f6410fce39dc32b6c.js"></script>
+<p>
+    This should be everything we need to be able to work with configurations. 
+    Now we just need to import it into the main HttpServer class and instantiate and we can use it.
+</p>
+<script src="https://gist.github.com/radimurban/6584bb15d8ede0a3794dfd41c44a453d.js"></script>
+<p>
+    Assuming the previous JSON Configuration this <code>config</code> would return 8080 on <code>congif.getPort()</code> and "path" on <code>config.getWebrot()</code>.
+</p>
+<h2>2. Establishing a connection and using server sockets</h2>
+<p>
+    To establish the connection, we need to have a socket that is going to listen to the port. 
+    Java has a <a href="https://docs.oracle.com/javase/7/docs/api/index.html">net library</a> which provides 
+    classes for networking applications. One of them is the *Server Socket*. A server socket waits for 
+    requests to come in over the network. It performs some operation based on that request, and then possibly 
+    returns a result to the requester. To create a server socket *bounded to a specific port*, we construct the 
+    object and pass the port number as a parameter. We can easily retrieve this from our Configuration object.
+</p>
+<script src="https://gist.github.com/radimurban/dc57a3dd4a0c8dca1437b141a01e4e24.js"></script>
+<p>
+    Now we can say we want the socket to wait for the connection to be established. The function <code>accept()</code> listens for a connection 
+    to be made to this socket and accepts it. The method blocks until a connection is made. Once a connection is made, Socket is returned. 
+    A socket is an endpoint for communication between two machines. <br>
+Socket has two methods we will want to use:
+</p>
+<ul>
+    <li><code>getInputStream()</code>: returns an <i>input stream</i> for reading bytes from this socket. Based on the <i>input stream</i> we will decide what to return as a response to the browser.</li>
+    <li><code>getOutputStream()</code>: returns an <i>output stream</i> for writing bytes to this socket. Using the <i>output stream</i> (and its method <code>write()</code>) we will be able to send the response to the browser</li>
+</ul>
+<script src="https://gist.github.com/radimurban/c6a50710e9b71834c5571b52762b8413.js"></script>
+
+<h2>3. Evaluating the request and forming a response</h2>
+<p>
+    [in draft]
+</p>
+</div>
+<footer>
+  <div id="ftrmenu">
+    <a target="_blank" href="https://github.com/radimurban">GitHub</a>
+    <a target="_blank" href="https://www.linkedin.com/in/radim-urban-bb0880186/">LinkedIn</a>
+    <a style="display:block" target="_blank" href="mailto:radimurban01@gmail.com">radimurban01 at gmail com</a>
+
+    
+  </div>
+</footer>
+
+</body>
+</html>
