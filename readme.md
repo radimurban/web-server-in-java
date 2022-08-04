@@ -622,9 +622,10 @@ This is all I can manage to do till my deadline. The actual server is working an
 
 <img width="1481" alt="image" src="https://user-images.githubusercontent.com/78273894/160201291-a989d88e-db4e-4280-8aa0-bd4e6853687d.png">
 
-## Potential To-Do's
-- images
-- working with headers
-- automatic /.index recognition
--
+## Potential To-Do'sTest
+- Thread pooling
+- Proper exception handling
+- Proper logging
+- Clean up request handling
+- automatic /.index recognition - how does this normally work?
 
